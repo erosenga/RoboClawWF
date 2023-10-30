@@ -1,0 +1,396 @@
+﻿// *** SendandReceiveBinaryArguments ***
+
+// This example expands the previous SendandReceiveArguments example. The PC will 
+//  send and receive multiple Binary values, demonstrating that this is more compact and faster. Since the output is not human readable any more, 
+//  the logging is disabled and the NewLines are removed
+//
+// It adds a demonstration of how to:
+// - Receive multiple binary parameters,
+// - Send multiple binary parameters
+// - Callback events being handled while the main program waits
+// - How to calculate milliseconds, similar to Arduino function Millis()
+
+using System;
+using System.Data.OleDb;
+using System.Threading;
+using CommandMessenger;
+using CommandMessenger.Transport.Serial;
+
+namespace StepperController
+{
+    // This is the list of recognized commands. These can be commands that can either be sent or received. 
+    // In order to receive, attach a callback function to these events
+    enum StepperCommand
+    {
+        // Commands
+        kAcknowledge, //0  Command to acknowledge that cmd was received
+        kError, //1  Command to report errors
+        kFloatAddition, //2  Command to request add two floats
+        kFloatAdditionResult, //3  Command to report addition result
+        kGetFwVerNum, //4  Command to get firmware version as a float
+        kGetFwVerStr, //5  Command to get firmware version as a string
+        kMoveToPosition, //6  Command to move current motor to absolute target position
+        kGetCurrentMotorStatus, //7  Command to get current motor status
+        kCurrentMotorStop, //8  Command to stop current motor move
+        kAwaitCurrentMotorMoveDone, //9  Command to await motor move completion
+        kInitializeAxis, //10 Command to init current axis using optical switch
+        kSetMovePolarity, //11 Command to set move polarity; false is clockwise positive, reversed (true) is ccw positive
+        kMoveRelative, //12 Command to move motor to relative target position
+        kGetPosition, //13 Command to get current motor position
+        kSetMaxTravel, //14 Command to set max travel distance
+        kSetMaxSpeed, //15 Command to set max motor speed
+        kSetCurrentScaling, //16 Command to set motor current scaling (% of max current) -- added in V1.0.1
+        kSetCurrentAxis, //17 Command to set current axis (defaults to 1) -- added in V1.0.2
+        kMultiMoveToPosition, //18 Command to move multiple motors to absolute target position -- added in V1.0.3
+        kMultiMoveRelative, //19 Command to move multiple motors to relative target position -- added in V1.0.4
+        kSetAcceleration, //20 Command to set acceleration value in steps/sec/sec (default is 50,000)
+        kMoveContinuous, //21 Command to rotate until stopped
+        kResetPosition, //22 Command to reset the current motor position to zero
+        kSetMaxHomeSearchMove, //23 Command to set max search distance for home
+        kSetHomingSpeed, //24 Command to set homing speed
+        kGetHomeFlagState, //25 Command to get home flag state for current axis
+        kGetLastInitPosition, //26 Command to get last axis init position
+        kSetMotorEnabledState, //27 Command to set flag specifying whether motor is enabled
+        kLEDsOff, //28 Command to set color of all NeoPixels to Off
+        kLEDsIdle, //29 Command to set color of all NeoPixels to Blue
+        kLEDsRun, //30 Command to send green Wipe pattern to NeoPixels
+        kLEDsError, //31 Command to send red Flash pattern to NeoPixels
+        kGetADCRawVoltage, //32 Command to get ADC value in unscaled units -- added in V1.0.18
+        kSetOutHigh, //33 Command to set an output pin high
+        kSetOutLow, //34 Command to set an output pin low
+        kSetLimitSwitchPolarity, //35 Command to set polarity of switches used; T=default (false if blocked)
+        kSetCurrentLimitSwitch, //36 Command to set currently active limit switch (it is auto-set on axis change)
+        kHInitializeXY, //37 Command to init X axis of H-Bot using optical switch
+        kHMoveRelative, //38 Command to move X,Y of H-Bot to relative target position
+        kHMoveToPosition, //39 Command to move X,Y of H-Bot to absolute target position; 3 params (1st param is 1, 2, 3 for X, Y, Both)
+        kHGetXY, //40 Command to get X,Y coordinate of H-Bot
+        kGetDebugStr, //41 Command to get Debug string
+        kHMoveDoneMssg, //42 Message to communicate that an H-move is complete: HInitializeXY, HMoveRelative, HMoveToPosition
+        kSetHoldCurrentScaling, //43 for compatibility with L6470 firmware
+        kSetMicroStepModeL6470, //44 for compatibility with L6470 firmware
+        kLEDsSetColor, //45 Command to set color of each NeoPixel (3)
+        kEnableEOT, //46 Command to enable all EOT sensors to stop motion on change
+        kDisableEOT, //47 Command to disable all EOT sensors to stop motion on change
+        kSet2209StallThresh, //48 Command to set TMC2209 stall threshold value
+        kSet2209MotorCurrent, //49 Command to set TMC2209 motor current in mA
+        kSet2209MicroStepMode, //50 Command to set TMC2209 microstep mode -- param is 2,4,8,16,...,256
+        kStopOn2209Stall, //51 Command to set TMC2209 to stop when threshold exceeded -- param T|F
+        kInit2209, //52 Command to initialize the TMC2209
+        kSensorOverride, //53 Command to stop on any of the 8 sensors
+        kSensorPolarity, //54 Command to set polarity of any of the 8 sensors
+        kGetSensorState, //55 Command to get state of any of the 8 sensors
+        kSetFlexiForceStallThresh, //56 Command to set FlexiForce stall threshold value for current motor
+        kStopOnFlexiForceStall, //57 Command to set current motor to stop when FlexiForce threshold exceeded -- param T|F
+        kGetFlexiForce, //58 Command to get last value of FlexiForce Sensor specified in the param (1 or 2)
+        kGetSwitchSet, //59 Command to get last value of Switch Block specified in the param (1 or 2 -- 1=microswitches, 2=optoswitches)
+        kStreamFlexiForceDebug, //60 Command to stream FlexiForce debug data -- param T|F
+        kStreamSwitchSetDebug, //61 Command to stream Switch settings (debug); Switch Block specified in the param (1 or 2 -- 1=microswitches, 2=optoswitches)
+        kCallbacksForSwitchChanges, //62 Command to enable or disable callbacks on Switch Changes
+        kLEDsSetPattern, //63 Command to set color and pattern of each NeoPixel (3) -- added V1.26
+        kLEDsSetBrightness, //64 Command to set brightness of NeoPixels (3) -- added V1.26
+        kGetReflectiveSensorValue, //65 Command to get last value of Reflective Sensor specified in the param (1 or 2)
+        kStreamReflectiveValues, //66 Command to stream Reflective debug data -- param T|F
+        kGetLightSensorValue, //67 Command to get last value of Light Sensor specified in the param (1 or 2)
+        kStreamLightValues, //68 Command to stream Light debug data -- param T|F
+        //------------------------------------------------------------------------------------------------------------------------------------------
+    };
+
+    public struct CommandStructure
+    {
+        public string name;
+        public string description;
+        public string parameters;
+    }
+
+   static  CommandStructure[] commandStrucuture = new CommandStructure[] {
+        new CommandStructure{name="Acknowledge",
+            description=" //0  Command to acknowledge that cmd was received",
+            parameters=""},
+        {"Error"," 1  Command to report errors",""},
+        {"FloatAddition"," 2  Command to request add two floats","ff"},
+        {"FloatAdditionResult"," 3  Command to report addition result",""},
+        {"GetFwVerNum"," 4  Command to get firmware version as a float",""},
+        {"GetFwVerStr"," 5  Command to get firmware version as a string",""},
+        {"MoveToPosition"," 6  Command to move current motor to absolute target position","i"},
+        {"GetCurrentMotorStatus"," 7  Command to get current motor status",""},
+        {"CurrentMotorStop"," 8  Command to stop current motor move",""},
+        {"AwaitCurrentMotorMoveDone"," 9  Command to await motor move completion",""},
+        {"InitializeAxis"," 10 Command to init current axis using optical switch",""},
+        {"SetMovePolarity"," 11 Command to set move polarity; false is clockwise positive, reversed (true) is ccw positive","b"},
+        {"MoveRelative"," 12 Command to move motor to relative target position","i"},
+        {"GetPosition"," 13 Command to get current motor position",""},
+        {"SetMaxTravel"," 14 Command to set max travel distance","i"},
+        {"SetMaxSpeed"," 15 Command to set max motor speed","i"},
+        {"SetCurrentScaling"," 16 Command to set motor current scaling (% of max current) -- added in V1.0.1",""},
+        {"SetCurrentAxis"," 17 Command to set current axis (defaults to 1) -- added in V1.0.2",""},
+        {"MultiMoveToPosition"," 18 Command to move multiple motors to absolute target position -- added in V1.0.3",""},
+        {"MultiMoveRelative"," 19 Command to move multiple motors to relative target position -- added in V1.0.4",""},
+        {"SetAcceleration"," 20 Command to set acceleration value in steps/sec/sec (default is 50,000)","i"},
+        {"MoveContinuous"," 21 Command to rotate until stopped",""},
+        {"ResetPosition"," 22 Command to reset the current motor position to zero",""},
+        {"SetMaxHomeSearchMove"," 23 Command to set max search distance for home",""},
+        {"SetHomingSpeed"," 24 Command to set homing speed",""},
+        {"GetHomeFlagState"," 25 Command to get home flag state for current axis",""},
+        {"GetLastInitPosition"," 26 Command to get last axis init position",""},
+        {"SetMotorEnabledState"," 27 Command to set flag specifying whether motor is enabled",""},
+        {"LEDsOff"," 28 Command to set color of all NeoPixels to Off",""},
+        {"LEDsIdle"," 29 Command to set color of all NeoPixels to Blue",""},
+        {"LEDsRun"," 30 Command to send green Wipe pattern to NeoPixels",""},
+        {"LEDsError"," 31 Command to send red Flash pattern to NeoPixels",""},
+        {"GetADCRawVoltage"," 32 Command to get ADC value in unscaled units -- added in V1.0.18",""},
+        {"SetOutHigh"," 33 Command to set an output pin high",""},
+        {"SetOutLow"," 34 Command to set an output pin low",""},
+        {"SetLimitSwitchPolarity"," 35 Command to set polarity of switches used; T=default (false if blocked)",""},
+        {"SetCurrentLimitSwitch"," 36 Command to set currently active limit switch (it is auto-set on axis change)",""},
+        {"HInitializeXY"," 37 Command to init X axis of H-Bot using optical switch",""},
+        {"HMoveRelative"," 38 Command to move X,Y of H-Bot to relative target position",""},
+        {"HMoveToPosition"," 39 Command to move X,Y of H-Bot to absolute target position; 3 params (1st param is 1, 2, 3 for X, Y, Both)",""},
+        {"HGetXY"," 40 Command to get X,Y coordinate of H-Bot",""},
+        {"GetDebugStr"," 41 Command to get Debug string",""},
+        {"HMoveDoneMssg"," 42 Message to communicate that an H-move is complete: HInitializeXY, HMoveRelative, HMoveToPosition",""},
+        {"SetHoldCurrentScaling"," 43 for compatibility with L6470 firmware",""},
+        {"SetMicroStepModeL6470"," 44 for compatibility with L6470 firmware",""},
+        {"LEDsSetColor"," 45 Command to set color of each NeoPixel (3)",""},
+        {"EnableEOT"," 46 Command to enable all EOT sensors to stop motion on change",""},
+        {"DisableEOT"," 47 Command to disable all EOT sensors to stop motion on change",""},
+        {"Set2209StallThresh"," 48 Command to set TMC2209 stall threshold value",""},
+        {"Set2209MotorCurrent"," 49 Command to set TMC2209 motor current in mA",""},
+        {"Set2209MicroStepMode"," 50 Command to set TMC2209 microstep mode -- param is 2,4,8,16,...,256",""},
+        {"StopOn2209Stall"," 51 Command to set TMC2209 to stop when threshold exceeded -- param T|F",""},
+        {"Init2209"," 52 Command to initialize the TMC2209",""},
+        {"SensorOverride"," 53 Command to stop on any of the 8 sensors",""},
+        {"SensorPolarity"," 54 Command to set polarity of any of the 8 sensors",""},
+        {"GetSensorState"," 55 Command to get state of any of the 8 sensors",""},
+        {"SetFlexiForceStallThresh"," 56 Command to set FlexiForce stall threshold value for current motor",""},
+        {"StopOnFlexiForceStall"," 57 Command to set current motor to stop when FlexiForce threshold exceeded -- param T|F",""},
+        {"GetFlexiForce"," 58 Command to get last value of FlexiForce Sensor specified in the param (1 or 2)",""},
+        {"GetSwitchSet"," 59 Command to get last value of Switch Block specified in the param (1 or 2 -- 1=microswitches, 2=optoswitches)",""},
+        {"StreamFlexiForceDebug"," 60 Command to stream FlexiForce debug data -- param T|F",""},
+        {"StreamSwitchSetDebug"," 61 Command to stream Switch settings (debug); Switch Block specified in the param (1 or 2 -- 1=microswitches, 2=optoswitches)",""},
+        {"CallbacksForSwitchChanges"," 62 Command to enable or disable callbacks on Switch Changes",""},
+        {"LEDsSetPattern"," 63 Command to set color and pattern of each NeoPixel (3) -- added V1.26",""},
+        {"LEDsSetBrightness"," 64 Command to set brightness of NeoPixels (3) -- added V1.26",""},
+        {"GetReflectiveSensorValue"," 65 Command to get last value of Reflective Sensor specified in the param (1 or 2)",""},
+        {"StreamReflectiveValues"," 66 Command to stream Reflective debug data -- param T|F",""},
+        {"GetLightSensorValue"," 67 Command to get last value of Light Sensor specified in the param (1 or 2)",""},
+        {"StreamLightValues"," 68 Command to stream Light debug data -- param T|F",""}
+    }
+
+
+    public class StepperController
+    {
+        public bool RunLoop { get; set; }
+        private SerialTransport _serialTransport;
+        private CmdMessenger _cmdMessenger;
+        private int _receivedItemsCount;                        // Counter of number of plain text items received
+        private int _receivedBytesCount;                        // Counter of number of plain text bytes received
+        long _beginTime;                                        // Start time, 1st item of sequence received 
+        long _endTime;                                          // End time, last item of sequence received 
+        private bool _receivePlainTextFloatSeriesFinished;      // Indicates if plain text float series has been fully received
+        private bool _receiveBinaryFloatSeriesFinished;         // Indicates if binary float series has been fully received
+        const int SeriesLength = 2000;                          // Number of items we like to receive from the Arduino
+        private const float SeriesBase = 1111111.111111F;       // Base of values to return: SeriesBase * (0..SeriesLength-1)
+
+        // ------------------ M A I N  ----------------------
+
+        // Setup function
+        public void Setup()
+        {
+            // Create Serial Port object
+            _serialTransport = new SerialTransport
+            {
+                CurrentSerialSettings = { PortName = "COM6", BaudRate = 115200 } // object initializer
+            };
+
+            // Initialize the command messenger with the Serial Port transport layer
+            // Set if it is communicating with a 16- or 32-bit Arduino board
+            _cmdMessenger = new CmdMessenger( _serialTransport, BoardType.Bit32 );
+
+            // Attach the callbacks to the Command Messenger
+            AttachCommandCallBacks();
+
+            // Start listening
+            _cmdMessenger.Connect();
+
+            _receivedItemsCount = 0;
+            _receivedBytesCount = 0;
+
+            // Clear queues 
+            _cmdMessenger.ClearReceiveQueue();
+            _cmdMessenger.ClearSendQueue();
+
+            Thread.Sleep( 100 );
+
+            // Send command requesting a series of 100 float values send in plain text form
+            var commandPlainText = new SendCommand( (int)Command.RequestPlainTextFloatSeries );
+            commandPlainText.AddArgument( (UInt16)SeriesLength );
+            commandPlainText.AddArgument( (float)SeriesBase );
+            // Send command 
+            _cmdMessenger.SendCommand( commandPlainText );
+
+            // Now wait until all values have arrived
+            while (!_receivePlainTextFloatSeriesFinished)
+            {
+                Thread.Sleep( 100 );
+            }
+
+
+            // Clear queues 
+            _cmdMessenger.ClearReceiveQueue();
+            _cmdMessenger.ClearSendQueue();
+
+            _receivedItemsCount = 0;
+            _receivedBytesCount = 0;
+            // Send command requesting a series of 100 float values send in binary form
+            var commandBinary = new SendCommand( (int)Command.RequestBinaryFloatSeries );
+            commandBinary.AddBinArgument( (UInt16)SeriesLength );
+            commandBinary.AddBinArgument( (float)SeriesBase );
+
+            // Send command 
+            _cmdMessenger.SendCommand( commandBinary );
+
+            // Now wait until all values have arrived
+            while (!_receiveBinaryFloatSeriesFinished)
+            {
+                Thread.Sleep( 100 );
+            }
+        }
+
+        // Loop function
+        public void Loop()
+        {
+            RunLoop = false;
+        }
+
+        // Exit function
+        public void Exit()
+        {
+            // Stop listening
+            _cmdMessenger.Disconnect();
+
+            // Dispose Command Messenger
+            _cmdMessenger.Dispose();
+
+            // Dispose Serial Port object
+            _serialTransport.Dispose();
+
+            // Pause before stop
+            Console.WriteLine( "Press any key to stop..." );
+            Console.ReadKey();
+        }
+
+        /// Attach command call backs. 
+        private void AttachCommandCallBacks()
+        {
+            _cmdMessenger.Attach( OnUnknownCommand );
+            _cmdMessenger.Attach( (int)Command.ReceivePlainTextFloatSeries, OnReceivePlainTextFloatSeries );
+            _cmdMessenger.Attach( (int)Command.ReceiveBinaryFloatSeries, OnReceiveBinaryFloatSeries );
+        }
+
+        // ------------------  C A L L B A C K S ---------------------
+
+        // Called when a received command has no attached function.
+        void OnUnknownCommand( ReceivedCommand arguments )
+        {
+            Console.WriteLine( "Command without attached callback received" );
+        }
+
+
+        // Callback function To receive the plain text float series from the Arduino
+        void OnReceivePlainTextFloatSeries( ReceivedCommand arguments )
+        {
+            _receivedBytesCount += CountBytesInCommand( arguments, true );
+
+            var count = arguments.ReadInt16Arg();
+            var receivedValue = arguments.ReadFloatArg();
+
+
+            if (count != _receivedItemsCount)
+            {
+                Console.WriteLine( "Values not matching: received {0} expected {1}", count, _receivedItemsCount );
+            }
+            if (_receivedItemsCount % (SeriesLength / 10) == 0)
+                Console.WriteLine( "Received value: {0}", receivedValue );
+            if (_receivedItemsCount == 0)
+            {
+                // Received first value, start stopwatch
+                _beginTime = Millis;
+            }
+            else if (count == SeriesLength - 1)
+            {
+                // Received all values, stop stopwatch
+                _endTime = Millis;
+                var deltaTime = (_endTime - _beginTime);
+                Console.WriteLine( "{0} milliseconds per {1} items = is {2} ms/item, {3} Hz",
+                    deltaTime,
+                    SeriesLength,
+                    (float)deltaTime / (float)SeriesLength,
+                    (float)1000 * SeriesLength / (float)deltaTime
+                    );
+                Console.WriteLine( "{0} milliseconds per {1} bytes = is {2} ms/byte,  {3} bytes/sec, {4} bps",
+                    deltaTime,
+                    _receivedBytesCount,
+                    (float)deltaTime / (float)_receivedBytesCount,
+                    (float)1000 * _receivedBytesCount / (float)deltaTime,
+                    (float)8 * 1000 * _receivedBytesCount / (float)deltaTime
+                    );
+                _receivePlainTextFloatSeriesFinished = true;
+            }
+            _receivedItemsCount++;
+        }
+
+        private int CountBytesInCommand( CommandMessenger.Command command, bool printLfCr )
+        {
+            var bytes = command.CommandString().Length; // Command + command separator
+            //var bytes = _cmdMessenger.CommandToString(command).Length + 1; // Command + command separator
+            if (printLfCr) bytes += 2; // Add  bytes for carriage return ('\r') and /or a newline  ('\n')
+            return bytes;
+        }
+
+        // Callback function To receive the binary float series from the Arduino
+        void OnReceiveBinaryFloatSeries( ReceivedCommand arguments )
+        {
+            var count = arguments.ReadBinUInt16Arg();
+            var receivedValue = arguments.ReadBinFloatArg();
+
+            _receivedBytesCount += CountBytesInCommand( arguments, false );
+
+            if (count != _receivedItemsCount)
+            {
+                Console.WriteLine( "Values not matching: received {0} expected {1}", count, _receivedItemsCount );
+            }
+
+            if (_receivedItemsCount % (SeriesLength / 10) == 0)
+                Console.WriteLine( "Received value: {0}", receivedValue );
+            if (_receivedItemsCount == 0)
+            {
+                // Received first value, start stopwatch
+                _beginTime = Millis;
+            }
+            else if (count == SeriesLength - 1)
+            {
+                // Received all values, stop stopwatch
+                _endTime = Millis;
+                var deltaTime = (_endTime - _beginTime);
+                Console.WriteLine( "{0} milliseconds per {1} items = is {2} ms/item, {3} Hz",
+                    deltaTime,
+                    SeriesLength,
+                    (float)deltaTime / (float)SeriesLength,
+                    (float)1000 * SeriesLength / (float)deltaTime
+                    );
+                Console.WriteLine( "{0} milliseconds per {1} bytes = is {2} ms/byte,  {3} bytes/sec, {4} bps",
+                    deltaTime,
+                    _receivedBytesCount,
+                    (float)deltaTime / (float)_receivedBytesCount,
+                    (float)1000 * _receivedBytesCount / (float)deltaTime,
+                    (float)8 * 1000 * _receivedBytesCount / (float)deltaTime
+                    );
+                _receiveBinaryFloatSeriesFinished = true;
+            }
+            _receivedItemsCount++;
+        }
+
+        // Return Milliseconds since 1970
+        public static long Millis { get { return (long)((DateTime.Now.ToUniversalTime() - new DateTime( 1970, 1, 1, 0, 0, 0, DateTimeKind.Utc )).TotalMilliseconds); } }
+    }
+}
