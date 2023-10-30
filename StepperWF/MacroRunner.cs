@@ -116,12 +116,13 @@ namespace StepperWF
                         do
                         {
                             Int32.Parse( parsedLine[1] );
-                            serialPort.WriteLine( "/Q" + parsedLine[1] + "R" );
+                            //serialPort.WriteLine( "/Q" + parsedLine[1] + "R" );
                             Thread.Sleep( 100 );
                             byte c1;
                             do
                             {
-                                c1 = (byte)serialPort.ReadByte();
+                                c1 = 0;
+                                //c1 = (byte)serialPort.ReadByte();
                                 response += c1;
                             } while (c1 != '\n');
                             if ((response.TrimEnd( '\r', '\n' )[2] & 0x40) != 0) continue; //isolate status byte, busy bit
@@ -187,7 +188,8 @@ namespace StepperWF
                     response = "";
                     do
                     {
-                        byte RxBuffer = (byte)serialPort.ReadByte();
+                        byte RxBuffer = 0;
+                        //RxBuffer = (byte)serialPort.ReadByte();
                         response += RxBuffer;
                         if (response.Contains( "\n" )) break;
                     } while (true);
