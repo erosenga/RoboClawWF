@@ -12,25 +12,27 @@ namespace StepperWF
 {
     public partial class Form1 : Form
     {
-        public string CurrentMacro="stepper.tst.txt";
+        public string CurrentMacro = "stepper.tst.txt";
         public StepperController stepperController;
         public Form1()
         {
+
             InitializeComponent();
-            stepperController = new StepperController();
             button2.Text = CurrentMacro;
+            stepperController = new StepperController(CurrentMacro, this);
+
         }
         // run macro
-        private void button1_Click( object sender, EventArgs e )
+        private void button1_Click(object sender, EventArgs e)
         {
-            Control[] macro = this.Controls.Find( "button2", true );
+            Control[] macro = this.Controls.Find("button2", true);
             string CurrentMacro = macro[0].Text;
-            MacroRunner macroRunner = new MacroRunner(stepperController,  CurrentMacro, stepperController.serialPort );
+            MacroRunner macroRunner = new MacroRunner(stepperController, CurrentMacro);
             macroRunner.RunMacro();
         }
 
         // Select macro
-        private void button2_Click( object sender, EventArgs e )
+        private void button2_Click(object sender, EventArgs e)
         {
             var picker = new OpenFileDialog();
             picker.FileName = CurrentMacro;
@@ -43,6 +45,11 @@ namespace StepperWF
                 button2.Text = CurrentMacro;
 
             }
+        }
+
+        public void SetStatus(string s)
+        {
+            button3.Text = s;
         }
 
     }

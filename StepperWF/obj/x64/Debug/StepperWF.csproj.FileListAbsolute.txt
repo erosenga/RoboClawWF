@@ -9,3 +9,14 @@ C:\Users\rosengau\source\repos\StepperWF\StepperWF\obj\x64\Debug\StepperWF.cspro
 C:\Users\rosengau\source\repos\StepperWF\StepperWF\obj\x64\Debug\StepperWF.csproj.CoreCompileInputs.cache
 C:\Users\rosengau\source\repos\StepperWF\StepperWF\obj\x64\Debug\StepperWF.exe
 C:\Users\rosengau\source\repos\StepperWF\StepperWF\obj\x64\Debug\StepperWF.pdb
+C:\Users\S2\source\repos\StepperWF\StepperWF\bin\x64\Debug\StepperWF.exe.config
+C:\Users\S2\source\repos\StepperWF\StepperWF\bin\x64\Debug\StepperWF.exe
+C:\Users\S2\source\repos\StepperWF\StepperWF\bin\x64\Debug\StepperWF.pdb
+C:\Users\S2\source\repos\StepperWF\StepperWF\obj\x64\Debug\StepperWF.csproj.AssemblyReference.cache
+C:\Users\S2\source\repos\StepperWF\StepperWF\obj\x64\Debug\StepperWF.csproj.SuggestedBindingRedirects.cache
+C:\Users\S2\source\repos\StepperWF\StepperWF\obj\x64\Debug\StepperWF.Form1.resources
+C:\Users\S2\source\repos\StepperWF\StepperWF\obj\x64\Debug\StepperWF.Properties.Resources.resources
+C:\Users\S2\source\repos\StepperWF\StepperWF\obj\x64\Debug\StepperWF.csproj.GenerateResource.cache
+C:\Users\S2\source\repos\StepperWF\StepperWF\obj\x64\Debug\StepperWF.csproj.CoreCompileInputs.cache
+C:\Users\S2\source\repos\StepperWF\StepperWF\obj\x64\Debug\StepperWF.exe
+C:\Users\S2\source\repos\StepperWF\StepperWF\obj\x64\Debug\StepperWF.pdb

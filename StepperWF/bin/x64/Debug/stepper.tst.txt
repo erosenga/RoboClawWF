@@ -1,0 +1,18 @@
+GetFwVerStr
+SetCurrentAxis,1
+SetMovePolarity,False
+Set2209MicroStepMode,8
+Set2209MotorCurrent,600
+SetMaxSpeed,20000
+SetMaxHomeSearchMove,150000
+SetMaxTravel,150000
+SetHomingSpeed,20000
+InitializeAxis
+#InitializeAxis
+GetCurrentMotorStatus
+AwaitCurrentMotorMoveDone
+GetCurrentMotorStatus
+MoveToPosition,120000
+AwaitCurrentMotorMoveDone
+ALERT,MACRO DONE!!!
+           
