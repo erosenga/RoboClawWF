@@ -205,11 +205,24 @@ namespace RoboClawWF
 
                     }
                     byte actualCommand = controller.commandStructure[commandNumber].CmdNumber;
-                    if (controller.commandStructure[commandNumber].returns == "")
+                    string retstring = controller.commandStructure[commandNumber].returns;
+                    if ( retstring == "")
                         rc.Write_CRC(rc.m_address, actualCommand, args);
                     else
                     {
-                        //rc.ReadCmd(rc.m_address, actualCommand, ref args);
+                        ArrayList argsin = new ArrayList();
+                        Int16[] currents = new short[4]; ;
+                        for(Int32 i=0;i<retstring.Length;i++)
+                        {
+                            argsin.Add(currents[i]);
+                        }
+                        rc.ReadCmd(rc.m_address, actualCommand, ref argsin);
+                        for (Int32 i = 0; i < retstring.Length; i++)
+                        {
+                            Console.Write(currents[i].ToString(), " ");
+
+                        }
+                        Console.WriteLine("");
                     }
 
                 }
