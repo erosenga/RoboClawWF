@@ -8,3 +8,14 @@ C:\Users\rosengau\source\repos\RoboClawWF\bin\x64\Debug\WindowsApplication.exe
 C:\Users\rosengau\source\repos\RoboClawWF\bin\x64\Debug\WindowsApplication.pdb
 C:\Users\rosengau\source\repos\RoboClawWF\obj\x64\Debug\WindowsApplication.exe
 C:\Users\rosengau\source\repos\RoboClawWF\obj\x64\Debug\WindowsApplication.pdb
+C:\Users\S2\source\repos\RoboClawWF\bin\x64\Debug\WindowsApplication.exe.config
+C:\Users\S2\source\repos\RoboClawWF\bin\x64\Debug\WindowsApplication.exe
+C:\Users\S2\source\repos\RoboClawWF\bin\x64\Debug\WindowsApplication.pdb
+C:\Users\S2\source\repos\RoboClawWF\obj\x64\Debug\RoboClawWF.csproj.AssemblyReference.cache
+C:\Users\S2\source\repos\RoboClawWF\obj\x64\Debug\RoboClawWF.csproj.SuggestedBindingRedirects.cache
+C:\Users\S2\source\repos\RoboClawWF\obj\x64\Debug\RoboClawWF.Form1.resources
+C:\Users\S2\source\repos\RoboClawWF\obj\x64\Debug\RoboClawWF.RoboClawWF.Properties.Resources.resources
+C:\Users\S2\source\repos\RoboClawWF\obj\x64\Debug\RoboClawWF.csproj.GenerateResource.cache
+C:\Users\S2\source\repos\RoboClawWF\obj\x64\Debug\RoboClawWF.csproj.CoreCompileInputs.cache
+C:\Users\S2\source\repos\RoboClawWF\obj\x64\Debug\WindowsApplication.exe
+C:\Users\S2\source\repos\RoboClawWF\obj\x64\Debug\WindowsApplication.pdb

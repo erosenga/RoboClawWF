@@ -53,10 +53,10 @@ namespace RoboClawWF
             int i = 0;
             foreach (CommandStructure command in commandStructure)
             {
-                CommandNumber.Add(command.CmdName, command.CmdNumber);
+                CommandNumber.Add(command.CmdName, i++);
             }
             CurrentMacro = runthis;
-            rc = new RoboclawClassLib.Roboclaw( "COM6", 115200, 0x80 ); //initialize com port
+            rc = new RoboclawClassLib.Roboclaw( "COM9", 115200, 0x80 ); //initialize com port
             rc.Open();
         }
 

@@ -171,7 +171,7 @@ namespace RoboClawWF
                         Console.WriteLine( e.Message );
                     }
                     Int32 parametersRequired = controller.commandStructure[commandNumber].parameters.Length;
-                    ArrayList args=new ArrayList();
+                    Object[] args=new  Object[1];
                     byteCount = 0;
                     sendBuffer[byteCount++] = 0x80; //address
                     sendBuffer[byteCount++] = (byte)commandNumber; //command (1 byte)
@@ -181,21 +181,22 @@ namespace RoboClawWF
                         {
                             case 'i':
                                 Int16 pi = Int16.Parse( lin1[pn + 1] );
-                                args.Add( pi );
+                                args[pn]=pi ;
                                 break;
                             case 'l':
                                 Int32 pl = Int32.Parse( lin1[pn + 1] );
-                                args.Add( pl );
+                                args[pn] =pl ;
                                 break;
                             case 'b':
                                 bool pb = bool.Parse( lin1[pn + 1] );
-                                args.Add( pb );
+                                args[pn]=( pb );
                                 break;
                             case 's':
-                                args.Add(lin1[pn+1]) ;
+                                args[pn]=lin1[pn+1] ;
                                 break;
                             case 'c':
-                                sendBuffer[byteCount++] = (byte)lin1[pn + 1][0];
+                                byte pc= (byte)Int32.Parse( lin1[pn+1] );
+                                args[pn]=pc;
                                 break;
                             default:
                                 break;
@@ -203,14 +204,18 @@ namespace RoboClawWF
                         }
 
                     }
+                    byte actualCommand = controller.commandStructure[commandNumber].CmdNumber;
                     if (controller.commandStructure[commandNumber].returns == "")
-                        rc.Write_CRC( rc.m_address, (byte)commandNumber, args );
+                        rc.Write_CRC(rc.m_address, actualCommand, args);
                     else
-                        rc.ReadCmd( rc.m_address, (byte)commandNumber, ref args );
+                    {
+                        //rc.ReadCmd(rc.m_address, actualCommand, ref args);
+                    }
 
                 }
     
             }
+            fs.Close();
         }
 
 

@@ -1236,6 +1236,7 @@ namespace RoboclawClassLib
                 int len = 0;
                 foreach (Object obj in args)
                 {
+                    if (obj == null) continue;
                     if (obj.GetType() == typeof(UInt32))
                         len += 4;
                     else if (obj.GetType() == typeof(Int32))

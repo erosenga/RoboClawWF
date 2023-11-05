@@ -1,0 +1,9 @@
+M1Speed,20
+M1Forward,40
+SLEEP,1000
+M1Forward,0
+SLEEP,1000
+M1Speed,500
+M1Backward,255
+SLEEP,1000
+M1Backward,0
