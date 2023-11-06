@@ -1,0 +1,65 @@
+            Roboclaw roboClaw;
+                if ((roboClaw == null || !roboClaw.IsOpen()))
+                        roboClaw = new Roboclaw(myComPort, 115200, 128); // Open the interface to the RoboClaw
+                        roboClaw.Open();
+                        //roboClaw.Open(myComPort, ref roboClawModel, 128, 38400); // Open the interface to the RoboClaw
+                        //labelRoboClawModel.Text = roboClawModel; // Display the RoboClaw device model number
+                        roboClaw.ResetEncoders();
+                //string roboClawModel = "";
+                //roboClaw = new Roboclaw();
+                if ((roboClaw == null || !roboClaw.IsOpen()) && !CallerAbortRequested(callerNum))
+                        roboClaw = new Roboclaw(myComPort, 115200, 128); // Open the interface to the RoboClaw
+                        roboClaw.Open();
+                        //roboClaw.Open(myComPort, ref roboClawModel, 128, 38400); // Open the interface to the RoboClaw
+                        //labelRoboClawModel.Text = roboClawModel; // Display the RoboClaw device model number
+                        roboClaw.ResetEncoders();
+                roboClaw.Close();
+                    roboClaw = new Roboclaw(myComPort, 115200, 128); // Open the interface to the RoboClaw
+                    roboClaw.Open();
+                    //roboClaw.Open(myComPort, ref roboClawModel, 128, 38400); // Open the interface to the RoboClaw
+                    //labelRoboClawModel.Text = roboClawModel; // Display the RoboClaw device model number
+                    roboClaw.ResetEncoders();
+                string roboClawModel = "";
+                if (roboClaw == null || !roboClaw.IsOpen())
+                        roboClaw = new Roboclaw("COM3", 38400, 128); // Open the interface to the RoboClaw
+                        roboClaw.Open();
+                        roboClaw.ResetEncoders();
+                    if (roboClaw.IsOpen())
+                            roboClaw.ST_M1Forward(0); // Stop the motor
+                            roboClaw.ST_M2Forward(0); // Stop the motor
+                    if (roboClaw.IsOpen())
+                            roboClaw.ST_M1Forward(pwr); // Start the motor going forward at power 100
+                            roboClaw.ST_M2Forward(pwr); // Start the motor going forward at power 100
+                    if (roboClaw.IsOpen())
+                            roboClaw.ST_M1Backward(pwr); // Start the motor going forward at power 100
+                            roboClaw.ST_M2Backward(pwr); // Start the motor going forward at power 100
+                    if (roboClaw.IsOpen())
+                            roboClaw.M1DutyAccel(duty, accel);
+                            roboClaw.M2DutyAccel(duty, accel);
+                    if (roboClaw.IsOpen())
+                            roboClaw.M1DutyAccel(duty, accel);
+                            roboClaw.M2DutyAccel(duty, accel);
+                    if (roboClaw.IsOpen() && !myParentScript.abortRequested)
+                            roboClaw.M1DutyAccel(duty, accel);
+                            roboClaw.M2DutyAccel(duty, accel);
+                    if (roboClaw.IsOpen()) // && (!myParentScript.Bay1Abort || !myParentScript.Bay2Abort))
+                            roboClaw.M1DutyAccel(0, 16000);
+                            //roboClaw.ST_M1Forward(0); // Stop the motor
+                            roboClaw.M2DutyAccel(0, 16000);
+                        //roboClaw.ST_M2Forward(0); // Stop the motor
+                    if (roboClaw.IsOpen()) // && (!myParentScript.Bay1Abort || !myParentScript.Bay2Abort))
+                            roboClaw.GetM1ISpeed(ref dcSpeed,ref dcStatus);
+                        //roboClaw.ST_M1Forward(0); // Stop the motor
+                            roboClaw.GetM2ISpeed(ref dcSpeed, ref dcStatus);
+                        //roboClaw.ST_M2Forward(0); // Stop the motor
+                    if (roboClaw.IsOpen())
+                        roboClaw.ST_M1Forward(0); // Stop the motor
+                        roboClaw.ST_M2Forward(0); // Stop the motor
+                    roboClaw.Close();
+                            roboClaw.GetM1Encoder(ref encoder, ref status);
+                            roboClaw.GetM2Encoder(ref encoder, ref status);
+                        roboClaw.M1Speed(speed);
+                        roboClaw.M2Speed(speed);
+                        roboClaw.GetM1Encoder(ref encoder, ref status);
+                        roboClaw.GetM2Encoder(ref encoder, ref status);
+                roboClaw.GetVersion(add, ref version);
