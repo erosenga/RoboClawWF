@@ -19,29 +19,29 @@ namespace RoboClawWF
         RoboClawController controller = null;
         UInt16 m_crc;
 
-        public MacroRunner( RoboClawController sc, string filename )
+        public MacroRunner(RoboClawController sc, string filename)
         {
             rc = sc.rc;
             CurrentMacro = filename;
-            fs = new StreamReader( CurrentMacro );
+            fs = new StreamReader(CurrentMacro);
             controller = sc;
         }
-        public MacroRunner( RoboClawController sc, Socket socket )
+        public MacroRunner(RoboClawController sc, Socket socket)
         {
 
             CurrentMacro = null;
             MRSocket = socket;
-            ns = new NetworkStream( socket );
+            ns = new NetworkStream(socket);
             controller = sc;
             rc = sc.rc;
-            
+
         }
 
-        private UInt16 crc_update( byte data )
+        private UInt16 crc_update(byte data)
         {
             int i;
             m_crc = (UInt16)(m_crc ^ ((UInt16)data << 8));
-            for (i = 0 ; i < 8 ; i++)
+            for (i = 0; i < 8; i++)
             {
                 if ((m_crc & 0x8000) != 0)
                     m_crc = (UInt16)((m_crc << 1) ^ 0x1021);
@@ -62,7 +62,7 @@ namespace RoboClawWF
 
                 while (true)
                 {
-                    int numberOfBytesRead = ns.Read( myReadBuffer, 0, 1 );
+                    int numberOfBytesRead = ns.Read(myReadBuffer, 0, 1);
                     if (numberOfBytesRead > 0)
                     {
                         if (myReadBuffer[0] == '\n')
@@ -87,51 +87,88 @@ namespace RoboClawWF
                 return fs.ReadLine();
         }
 
+
+        public long MonitorCurrents(long period)
+        {
+            long startTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+            long currentTime = startTime;
+            ArrayList argsin = new ArrayList();
+            Int16 current1 = 0;
+            Int16 current2 = 0;
+            argsin.Add(current1);
+            argsin.Add(current2);
+            while (currentTime - startTime < period)
+            {
+                rc.ReadCmd(rc.m_address, 49, ref argsin);
+                Console.WriteLine(current1.ToString(), " ", current2.ToString());
+                controller.SetControlPropertyThreadSafe(controller.parent.progressBar1, "Value", current1);
+                controller.SetControlPropertyThreadSafe(controller.parent.progressBar2, "Value", current2);
+                currentTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+            }
+            return period;
+        }
+
+
+
         public void RunMacro()
         {
 
             //  Read in macro stream
 
             byte[] b = new byte[1024];
-            System.Text.UTF8Encoding temp = new System.Text.UTF8Encoding( true );
+            System.Text.UTF8Encoding temp = new System.Text.UTF8Encoding(true);
             string line;
             byte[] sendBuffer = new byte[1024];
             int byteCount = 0;
             while ((line = readLine()) != null)
             {
                 // "Nested" macro calling
-                if (line.StartsWith( "@" ))
+                if (line.StartsWith("@"))
                 {
-                    MacroRunner macroRunner = new MacroRunner( controller, line.Substring( 1 ) );
+                    MacroRunner macroRunner = new MacroRunner(controller, line.Substring(1));
                     macroRunner.RunMacro();
                     continue;
                 }
                 // Wait for fixed time
-                if (line.StartsWith( "SLEEP" ))
+                if (line.StartsWith("SLEEP"))
                 {
                     int delay = 0;
-                    string[] line1 = line.Split( '#' ); //Disregard comments
-                    string[] parsedLine = line1[0].Split( ',' );
-                    if (string.IsNullOrWhiteSpace( parsedLine[0] )) //Disregard blanks lines
+                    string[] line1 = line.Split('#'); //Disregard comments
+                    string[] parsedLine = line1[0].Split(',');
+                    if (string.IsNullOrWhiteSpace(parsedLine[0])) //Disregard blanks lines
                         continue;
                     if (parsedLine[1] != null)
-                        delay = Int32.Parse( parsedLine[1] );
-                    Thread.Sleep( delay );
+                        delay = Int32.Parse(parsedLine[1]);
+                    Thread.Sleep(delay);
                     continue;
                 }
-                // Wait until status is idle
-                if (line.StartsWith( "WAIT" ))
+                // Monitor current for specified time
+                if (line.StartsWith("MONITOR"))
                 {
-                    string[] line1 = line.Split( '#' ); //Disregard comments
-                    string[] parsedLine = line1[0].Split( ',' );
-                    if (string.IsNullOrWhiteSpace( parsedLine[0] )) //Disregard blanks lines
+                    int monitortime = 0;
+                    string[] line1 = line.Split('#'); //Disregard comments
+                    string[] parsedLine = line1[0].Split(',');
+                    if (string.IsNullOrWhiteSpace(parsedLine[0])) //Disregard blanks lines
+                        continue;
+                    if (parsedLine[1] != null)
+                        monitortime = Int32.Parse(parsedLine[1]);
+                    MonitorCurrents(monitortime);
+                    continue;
+                }
+
+                // Wait until status is idle
+                if (line.StartsWith("WAIT"))
+                {
+                    string[] line1 = line.Split('#'); //Disregard comments
+                    string[] parsedLine = line1[0].Split(',');
+                    if (string.IsNullOrWhiteSpace(parsedLine[0])) //Disregard blanks lines
                         continue;
                     if (parsedLine[1] != null)
                     {
                         bool motionDone = false;
                         do
                         {
-                            Int32.Parse( parsedLine[1] );
+                            Int32.Parse(parsedLine[1]);
 
                         } while (!motionDone);
 
@@ -139,27 +176,27 @@ namespace RoboClawWF
                     continue;
                 }
                 // Pop up MessageBox
-                if (line.StartsWith( "ALERT" ))
+                if (line.StartsWith("ALERT"))
                 {
-                    string[] line1 = line.Split( '#' ); //Disregard comments
-                    string[] parsedLine = line1[0].Split( ',' );
-                    if (string.IsNullOrWhiteSpace( parsedLine[0] )) //Disregard blanks lines
+                    string[] line1 = line.Split('#'); //Disregard comments
+                    string[] parsedLine = line1[0].Split(',');
+                    if (string.IsNullOrWhiteSpace(parsedLine[0])) //Disregard blanks lines
                         continue;
 
                     if (parsedLine[1] != null)
                     {
                         MessageBoxButtons buttons = MessageBoxButtons.YesNo;
                         DialogResult result;
-                        result = MessageBox.Show( parsedLine[1], "Alert!", buttons );
+                        result = MessageBox.Show(parsedLine[1], "Alert!", buttons);
                         continue;
                     }
                 }
 
                 //Actual command
-                string[] lin2 = line.Split( '#' ); //kill comments
-                if (!string.IsNullOrWhiteSpace( lin2[0] ))
+                string[] lin2 = line.Split('#'); //kill comments
+                if (!string.IsNullOrWhiteSpace(lin2[0]))
                 {
-                    string[] lin1 = lin2[0].Split( ',' ); //split parameters
+                    string[] lin1 = lin2[0].Split(','); //split parameters
                     Int32 commandNumber = -1;
                     try
                     {
@@ -168,35 +205,35 @@ namespace RoboClawWF
                     catch (Exception e)
                     {
                         // invalid command (not in dictionary)
-                        Console.WriteLine( e.Message );
+                        Console.WriteLine(e.Message);
                     }
                     Int32 parametersRequired = controller.commandStructure[commandNumber].parameters.Length;
-                    Object[] args=new  Object[1];
+                    Object[] args = new Object[1];
                     byteCount = 0;
                     sendBuffer[byteCount++] = 0x80; //address
                     sendBuffer[byteCount++] = (byte)commandNumber; //command (1 byte)
-                    for (Int32 pn = 0 ; pn < parametersRequired ; pn++)
+                    for (Int32 pn = 0; pn < parametersRequired; pn++)
                     {
                         switch (controller.commandStructure[commandNumber].parameters[pn])
                         {
                             case 'i':
-                                Int16 pi = Int16.Parse( lin1[pn + 1] );
-                                args[pn]=pi ;
+                                Int16 pi = Int16.Parse(lin1[pn + 1]);
+                                args[pn] = pi;
                                 break;
                             case 'l':
-                                Int32 pl = Int32.Parse( lin1[pn + 1] );
-                                args[pn] =pl ;
+                                Int32 pl = Int32.Parse(lin1[pn + 1]);
+                                args[pn] = pl;
                                 break;
                             case 'b':
-                                bool pb = bool.Parse( lin1[pn + 1] );
-                                args[pn]=( pb );
+                                bool pb = bool.Parse(lin1[pn + 1]);
+                                args[pn] = (pb);
                                 break;
                             case 's':
-                                args[pn]=lin1[pn+1] ;
+                                args[pn] = lin1[pn + 1];
                                 break;
                             case 'c':
-                                byte pc= (byte)Int32.Parse( lin1[pn+1] );
-                                args[pn]=pc;
+                                byte pc = (byte)Int32.Parse(lin1[pn + 1]);
+                                args[pn] = pc;
                                 break;
                             default:
                                 break;
@@ -206,13 +243,13 @@ namespace RoboClawWF
                     }
                     byte actualCommand = controller.commandStructure[commandNumber].CmdNumber;
                     string retstring = controller.commandStructure[commandNumber].returns;
-                    if ( retstring == "")
+                    if (retstring == "")
                         rc.Write_CRC(rc.m_address, actualCommand, args);
                     else
                     {
                         ArrayList argsin = new ArrayList();
                         Int16[] currents = new short[4]; ;
-                        for(Int32 i=0;i<retstring.Length;i++)
+                        for (Int32 i = 0; i < retstring.Length; i++)
                         {
                             argsin.Add(currents[i]);
                         }
@@ -226,7 +263,7 @@ namespace RoboClawWF
                     }
 
                 }
-    
+
             }
             fs.Close();
         }

@@ -52,5 +52,14 @@ namespace RoboClawWF
             button3.Text = s;
         }
 
+        private void progressBar1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void progressBar2_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }

@@ -42,11 +42,11 @@ namespace RoboClawWF
             new CommandStructure{CmdNumber=68, CmdName="M1DutyAccel", Description="Set motor1 duty and acceleration",  parameters="il",  returns=""},
             new CommandStructure{CmdNumber=69, CmdName="M2DutyAccel", Description="Set motor2 duty and acceleration",  parameters="il",  returns=""},
             new CommandStructure{CmdNumber=35, CmdName="M1Speed", Description="Drive Motor1 at speed", parameters="l",  returns=""},
-            new CommandStructure{CmdNumber=36, CmdName="M2Speed", Description="Drive Motor2 at speed", parameters="l",  returns=""}
+            new CommandStructure{CmdNumber=49, CmdName="GetCurrents", Description="Get motor currents", parameters="",  returns="ii"}
     };
         public MacroRunner macroRunner;
         public string CurrentMacro;
-        Form1 parent;
+        public Form1 parent;
         public RoboClawController(string runthis, Form1 parentIn)
         {
             parent = parentIn;
@@ -67,7 +67,7 @@ namespace RoboClawWF
                          string propertyName,
                          object propertyValue);
 
-        public static void SetControlPropertyThreadSafe(
+        public  void SetControlPropertyThreadSafe(
             Control control,
             string propertyName,
             object propertyValue)
