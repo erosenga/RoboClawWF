@@ -108,7 +108,34 @@ namespace RoboClawWF
             return period;
         }
 
-
+        // report progress to conductor, get response from him
+        public string ReportProgress(string report, string sender)
+        {
+            byte[]  myReadBuffer= new byte[2];
+            string line = "";
+            if (ns == null)    //no conductor active, do nothing
+                return "";
+            string localReport = "sender" + "|" + report + "\n\r";
+            ns.Write(System.Text.Encoding.UTF8.GetBytes(localReport), 0, localReport.Length); //send report
+            //read response from conductor
+            while (true)   
+            {
+                int numberOfBytesRead = ns.Read(myReadBuffer, 0, 1);
+                if (numberOfBytesRead > 0)
+                {
+                    if (myReadBuffer[0] == '\r')
+                    {
+                        break;
+                    }
+                    else
+                    if (myReadBuffer[0] == 0x03) //EOF
+                        return null;
+                    else
+                        line += myReadBuffer[0];
+                }
+            }
+            return line;
+        }
 
         public void RunMacro()
         {
@@ -191,7 +218,20 @@ namespace RoboClawWF
                         continue;
                     }
                 }
+                // Pop up MessageBox
+                if (line.StartsWith("REPORT"))
+                {
+                    string[] line1 = line.Split('#'); //Disregard comments
+                    string[] parsedLine = line1[0].Split(',');
+                    if (string.IsNullOrWhiteSpace(parsedLine[0])) //Disregard blanks lines
+                        continue;
 
+                    if (parsedLine[1] != null)
+                    {
+                        string result = ReportProgress(parsedLine[1], "RoboClaw");
+                        continue;
+                    }
+                }
                 //Actual command
                 string[] lin2 = line.Split('#'); //kill comments
                 if (!string.IsNullOrWhiteSpace(lin2[0]))
