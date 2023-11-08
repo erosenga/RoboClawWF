@@ -7,7 +7,7 @@
     <ProjectGuid>{1D054064-B748-4E0B-BE43-82C0B637C1F0}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <RootNamespace>RoboClawWF</RootNamespace>
-    <AssemblyName>StepperWF</AssemblyName>
+    <AssemblyName>RoboClawWF</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>

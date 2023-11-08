@@ -1,4 +1,4 @@
-﻿namespace StepperWF
+﻿namespace RoboClawWF
 {
     partial class Form1
     {
@@ -94,7 +94,7 @@
             this.Controls.Add(this.button1);
             this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "Form1";
-            this.Text = "Stepper Controller";
+            this.Text = "RoboClaw Controller";
             this.ResumeLayout(false);
             this.PerformLayout();
 

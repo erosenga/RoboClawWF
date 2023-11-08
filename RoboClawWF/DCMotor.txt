@@ -693,5 +693,5 @@
         }
 
         /// <summary>
-        /// Stepper Motor and associated components
+        /// RoboClaw Motor and associated components
         /// </summary>

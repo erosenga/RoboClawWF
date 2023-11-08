@@ -8,18 +8,18 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace StepperWF
+namespace RoboClawWF
 {
     public partial class Form1 : Form
     {
-        public string CurrentMacro = "stepper.tst.txt";
-        public StepperController stepperController;
+        public string CurrentMacro = "RoboClaw.tst.txt";
+        public RoboClawController RoboClawController;
         public Form1()
         {
 
             InitializeComponent();
             button2.Text = CurrentMacro;
-            stepperController = new StepperController(CurrentMacro, this);
+            RoboClawController = new RoboClawController(CurrentMacro, this);
 
         }
         // run macro
@@ -27,7 +27,7 @@ namespace StepperWF
         {
             Control[] macro = this.Controls.Find("button2", true);
             string CurrentMacro = macro[0].Text;
-            MacroRunner macroRunner = new MacroRunner(stepperController, CurrentMacro);
+            MacroRunner macroRunner = new MacroRunner(RoboClawController, CurrentMacro);
             macroRunner.RunMacro();
         }
 
